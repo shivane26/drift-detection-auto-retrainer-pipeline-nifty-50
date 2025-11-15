@@ -166,6 +166,9 @@ def debug_dashboard(request: Request):
     return templates.TemplateResponse("dashboard_debug.html", {"request": request})
 
 # default
+from fastapi.responses import RedirectResponse
+
 @app.get("/")
-def home():
-    return {"message": "NIFTY50 MLOps Dashboard — go to /dashboard"}
+async def root():
+    return RedirectResponse(url="/dashboard")
+
