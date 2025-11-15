@@ -1,0 +1,39 @@
+name: MLOps NIFTY Pipeline
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt
+
+      - name: Run drift detection
+        run: |
+          python drift.py
+
+      - name: Attempt retrain if drift high
+        id: retrain
+        run: |
+          python retrain.py
+
+      - name: Commit updated model
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add models/
+          git commit -m "Automated retrain [ci skip]" || echo "No updates"
+          git push
