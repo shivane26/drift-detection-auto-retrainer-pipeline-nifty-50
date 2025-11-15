@@ -130,6 +130,17 @@ async def api_predict(request: Request):
         raise HTTPException(status_code=500, detail="Model not available. Train first.")
     payload = await request.json()
     # payload expected: Open, High, Low, Close, Volume
+    # Ensure numeric types (accept decimals) - coerce to float where possible
+    for k, v in list(payload.items()):
+        try:
+            # preserve missing/empty as NaN
+            if v is None or (isinstance(v, str) and v.strip() == ""):
+                payload[k] = float('nan')
+            else:
+                payload[k] = float(v)
+        except Exception:
+            # leave as-is (pandas will coerce later and raise if unusable)
+            pass
     data = pd.DataFrame([payload])
     # need some recent history to compute indicators; fetch last 60 days
     hist = fetch_nifty(2).tail(60)
@@ -140,9 +151,37 @@ async def api_predict(request: Request):
     # features
     with open(META_PATH) as f:
         meta = json.load(f)
-    feature_cols = meta.get("features", [c for c in last.columns if c not in ['Date','Close','return'] and last[c].dtype in ['float64', 'float32', 'int64', 'int32']])
-    
-    X = last[feature_cols].copy()
+    # meta may contain feature names serialized as lists/tuples; normalize to strings
+    feature_list = meta.get("features", [])
+    feature_cols = []
+    try:
+        for feat in feature_list:
+            if isinstance(feat, list) and len(feat) > 0:
+                feature_cols.append(feat[0])
+            else:
+                feature_cols.append(feat)
+    except Exception:
+        # fallback: pick numeric columns from last
+        feature_cols = [c for c in last.columns if c not in ['Date','Close','return'] and last[c].dtype in ['float64', 'float32', 'int64', 'int32']]
+
+    # Ensure feature names are strings (handle tuple columns coming from yfinance multi-index)
+    feature_cols = [c[0] if isinstance(c, tuple) else c for c in feature_cols]
+
+    # Map desired feature names to actual dataframe columns (which may be tuples or strings)
+    actual_cols = []
+    for target_col in feature_cols:
+        for col in last.columns:
+            if isinstance(col, tuple):
+                if col[0] == target_col:
+                    actual_cols.append(col)
+                    break
+            elif col == target_col:
+                actual_cols.append(col)
+                break
+
+    X = last[actual_cols].copy() if actual_cols else last[feature_cols].copy()
+    # Flatten column names to strings
+    X.columns = [c[0] if isinstance(c, tuple) else c for c in X.columns]
     # Sanitize column names to match training
     X.columns = [str(c).replace('[', '_').replace(']', '_').replace('{', '_').replace('}', '_').replace(':', '_').replace(',', '_').replace('"', '_').replace("'", '_') for c in X.columns]
     
