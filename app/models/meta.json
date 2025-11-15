@@ -1,0 +1,89 @@
+{
+  "auc": 0.532746419227946,
+  "accuracy": 0.5345181134654818,
+  "horizon_days": 3,
+  "threshold_return": 0.004,
+  "trained_at": "2025-11-15 06:48:42",
+  "features": [
+    [
+      "Open",
+      "^NSEI"
+    ],
+    [
+      "High",
+      "^NSEI"
+    ],
+    [
+      "Low",
+      "^NSEI"
+    ],
+    [
+      "Close",
+      "^NSEI"
+    ],
+    [
+      "Volume",
+      "^NSEI"
+    ],
+    [
+      "return",
+      ""
+    ],
+    [
+      "ret_lag_1",
+      ""
+    ],
+    [
+      "ret_lag_2",
+      ""
+    ],
+    [
+      "ret_lag_3",
+      ""
+    ],
+    [
+      "ret_lag_5",
+      ""
+    ],
+    [
+      "ret_lag_7",
+      ""
+    ],
+    [
+      "sma_5",
+      ""
+    ],
+    [
+      "sma_10",
+      ""
+    ],
+    [
+      "ema_12",
+      ""
+    ],
+    [
+      "ema_26",
+      ""
+    ],
+    [
+      "macd",
+      ""
+    ],
+    [
+      "macd_signal",
+      ""
+    ],
+    [
+      "rsi_14",
+      ""
+    ],
+    [
+      "bb_width",
+      ""
+    ],
+    [
+      "vol_10",
+      ""
+    ]
+  ]
+}

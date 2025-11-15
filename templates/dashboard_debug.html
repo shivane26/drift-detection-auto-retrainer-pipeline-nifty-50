@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NIFTY50 Dashboard - DEBUG</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root{
+      --bg:#071019;
+      --card:#0b1720;
+      --muted:#8aa0b1;
+      --neon:#14f195;
+    }
+    html,body { height:100%; background:var(--bg); color:#e6eef8; font-family:system-ui; }
+    .card { background:rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); padding:16px; border-radius:8px; }
+    .neon { color: var(--neon); }
+  </style>
+</head>
+<body class="p-6">
+  <div class="max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">NIFTY50 Dashboard - Debug Mode</h1>
+    
+    <div id="status" class="card mb-6 text-yellow-400">Loading...</div>
+    
+    <div class="grid grid-cols-2 gap-6 mb-6">
+      <div class="card">
+        <h2 class="font-bold mb-2">API Status</h2>
+        <div id="apiStatus" class="text-sm font-mono"></div>
+      </div>
+      
+      <div class="card">
+        <h2 class="font-bold mb-2">Data Summary</h2>
+        <div id="dataSummary" class="text-sm font-mono"></div>
+      </div>
+    </div>
+
+    <div class="card mb-6">
+      <h2 class="font-bold mb-4">Price Chart (Last 30 Days)</h2>
+      <canvas id="priceChart" height="100"></canvas>
+    </div>
+
+    <div class="card mb-6">
+      <h2 class="font-bold mb-4">Prediction</h2>
+      <div id="predictionResult" class="text-2xl">—</div>
+    </div>
+
+    <div class="card">
+      <h2 class="font-bold mb-2">Model Info</h2>
+      <div id="modelInfo" class="text-sm font-mono"></div>
+    </div>
+  </div>
+
+<script>
+let chart = null;
+
+async function loadDashboard() {
+  const status = document.getElementById('status');
+  const apiStatus = document.getElementById('apiStatus');
+  const dataSummary = document.getElementById('dataSummary');
+  
+  try {
+    status.innerHTML = 'Fetching data...';
+    
+    // Test history API
+    const histResp = await fetch('/api/history');
+    const histData = await histResp.json();
+    
+    apiStatus.innerHTML += 'History: ✅ ' + histData.dates.length + ' records<br>';
+    dataSummary.innerHTML += 'Last date: ' + histData.dates[histData.dates.length - 1] + '<br>';
+    dataSummary.innerHTML += 'Last close: ' + histData.close[histData.close.length - 1] + '<br>';
+    
+    // Render chart - last 30 days
+    const last30 = 30;
+    const dates = histData.dates.slice(-last30);
+    const closes = histData.closes.slice(-last30);
+    
+    const ctx = document.getElementById('priceChart').getContext('2d');
+    if(chart) chart.destroy();
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: dates,
+        datasets: [{
+          label: 'Close Price',
+          data: closes,
+          borderColor: '#14f195',
+          backgroundColor: 'rgba(20,241,149,0.1)',
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: '#e6eef8' } } },
+        scales: {
+          x: { ticks: { color: '#9aa6b2' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: '#9aa6b2' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        }
+      }
+    });
+    
+    // Get prediction
+    const predResp = await fetch('/api/next_prediction');
+    const predData = await predResp.json();
+    apiStatus.innerHTML += 'Prediction: ✅<br>';
+    document.getElementById('predictionResult').innerHTML = `<span class="neon">${predData.label}</span> (${predData.probability}%)`;
+    
+    // Get meta
+    const metaResp = await fetch('/api/meta');
+    const metaData = await metaResp.json();
+    apiStatus.innerHTML += 'Meta: ✅<br>';
+    document.getElementById('modelInfo').innerHTML = `AUC: ${metaData.auc}<br>Accuracy: ${metaData.accuracy}<br>Trained: ${metaData.trained_at}`;
+    
+    status.innerHTML = '✅ All data loaded successfully!';
+    status.style.color = '#14f195';
+    
+  } catch(e) {
+    console.error('Error:', e);
+    status.innerHTML = '❌ Error: ' + e.message;
+    status.style.color = '#ff6b6b';
+    apiStatus.innerHTML = '<span style="color:#ff6b6b">Error loading data</span>';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadDashboard);
+</script>
+</body>
+</html>

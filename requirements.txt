@@ -1,0 +1,12 @@
+yfinance
+pandas
+numpy
+scikit-learn
+lightgbm
+ta
+joblib
+fastapi
+uvicorn
+python-multipart
+jinja2
+pyarrow

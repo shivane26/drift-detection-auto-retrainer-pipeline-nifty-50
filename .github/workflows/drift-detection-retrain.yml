@@ -1,0 +1,64 @@
+name: Daily Drift Detection & Auto Retrain
+
+on:
+  schedule:
+    # Run every day at 4:30 PM IST (11:00 AM UTC)
+    - cron: '0 11 * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  drift-detection-retrain:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run drift detection & retraining
+        id: train
+        run: |
+          python scripts/drift_detection_retrain.py
+          # Set outputs to indicate if retraining occurred
+          if [ -f "retrain_triggered.flag" ]; then
+            echo "retraining_occurred=true" >> $GITHUB_OUTPUT
+            echo "Retraining was triggered due to drift detection"
+          else
+            echo "retraining_occurred=false" >> $GITHUB_OUTPUT
+            echo "No drift detected - model remains current"
+          fi
+
+      - name: Commit and push retraining artifacts (if retrained)
+        if: steps.train.outputs.retraining_occurred == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action Bot"
+          git add app/models/ensemble.pkl app/models/meta.json
+          git commit -m "🤖 Auto retrain: Drift detected - model updated [skip ci]"
+          git push
+
+      - name: Notify - Retraining Success
+        if: steps.train.outputs.retraining_occurred == 'true'
+        run: |
+          echo "✅ Model retraining completed successfully"
+          echo "📊 New model artifacts committed to repository"
+          echo "🚀 Render deployment will auto-trigger"
+
+      - name: Notify - No Drift Detected
+        if: steps.train.outputs.retraining_occurred == 'false'
+        run: |
+          echo "✅ Daily drift check completed"
+          echo "📈 Current model is performing well - no retraining needed"
+          echo "🔄 Next check scheduled for tomorrow"

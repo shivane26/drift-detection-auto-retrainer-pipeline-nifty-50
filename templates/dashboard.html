@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NIFTY50 Neon Dashboard</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+  <!-- REMOVED: Financial chart plugin since Simple Browser may not support it -->
+  <style>
+    :root{
+      --bg:#071019;
+      --card:#0b1720;
+      --muted:#8aa0b1;
+      --neon:#14f195;
+      --accent:#38bdf8;
+    }
+    html,body { height:100%; background:var(--bg); color:#e6eef8; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+    .card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.03); padding:18px; border-radius:12px; box-shadow: 0 6px 30px rgba(2,6,23,0.6); }
+    .neon { color: var(--neon); text-shadow: 0 0 10px rgba(20,241,149,0.12), 0 0 24px rgba(56,189,248,0.04); }
+    .small-muted { color: var(--muted); font-size:0.9rem; }
+    .btn { background: linear-gradient(90deg,var(--accent),#7c3aed); padding:10px 14px; border-radius:8px; font-weight:600; color:#041022; border:none; cursor:pointer; }
+    .gauge-outer { width:160px; height:160px; display:flex; align-items:center; justify-content:center; margin:auto; }
+    .card-title { font-weight:700; color:#dff7ef; }
+    .muted { color: var(--muted); }
+    .glow-up { animation: neonGlow 1.8s ease-in-out infinite; }
+    .glow-down { animation: neonGlowDown 1.8s ease-in-out infinite; }
+    @keyframes neonGlow {
+      0% { filter: drop-shadow(0 0 0 rgba(20,241,149,0.00)); transform: translateY(0); }
+      50% { filter: drop-shadow(0 12px 30px rgba(20,241,149,0.25)); transform: translateY(-6px); }
+      100% { filter: drop-shadow(0 0 0 rgba(20,241,149,0.00)); transform: translateY(0); }
+    }
+    @keyframes neonGlowDown {
+      0% { filter: drop-shadow(0 0 0 rgba(255,107,107,0.00)); transform: translateY(0); }
+      50% { filter: drop-shadow(0 12px 30px rgba(255,107,107,0.22)); transform: translateY(6px); }
+      100% { filter: drop-shadow(0 0 0 rgba(255,107,107,0.00)); transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="max-w-7xl mx-auto p-6">
+    <header class="flex items-start justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-extrabold">NIFTY50 Neon Dashboard</h1>
+        <div class="small-muted">Automated MLOps • Drift & retrain • Dark neon theme</div>
+      </div>
+      <div class="text-right">
+        <div class="small-muted">Model status</div>
+        <div id="modelState" class="neon font-semibold">Loaded</div>
+      </div>
+    </header>
+
+    <main class="grid grid-cols-12 gap-6">
+      <section class="col-span-8">
+        <div class="card">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <div class="card-title">Price (Last 120 days)</div>
+              <div class="small-muted">Source: Yahoo Finance (^NSEI)</div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <button id="downloadPNG" class="btn text-sm">Download PNG</button>
+              <div class="small-muted text-xs">Candles + SMA overlay</div>
+            </div>
+          </div>
+
+          <div class="chart-wrap">
+            <canvas id="candlestickChart" height="260"></canvas>
+          </div>
+        </div>
+
+        <div class="mt-4 card">
+          <div class="card-title">Volume</div>
+          <canvas id="volumeChart" height="100"></canvas>
+        </div>
+      </section>
+
+      <aside class="col-span-4 space-y-4">
+        <div class="card">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="card-title">Next Trend (3-day + threshold)</div>
+              <div class="small-muted">Model prediction for next 3-day move</div>
+            </div>
+            <div class="text-right">
+              <div id="trendLabel" class="text-2xl font-bold neon">—</div>
+              <div id="trendConf" class="small-muted">Confidence: —</div>
+            </div>
+          </div>
+
+          <div class="mt-4 flex items-center justify-center">
+            <div class="gauge-outer">
+              <canvas id="gauge"></canvas>
+            </div>
+          </div>
+
+          <div id="trendArrow" class="flex items-center justify-center mt-3"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Quick Predict (Manual)</div>
+          <div class="small-muted">Enter today's OHLC & Volume</div>
+          <div class="mt-3 space-y-2">
+            <input id="inOpen" class="w-full p-2 rounded bg-transparent border border-gray-700 text-white" placeholder="Open" />
+            <input id="inHigh" class="w-full p-2 rounded bg-transparent border border-gray-700 text-white" placeholder="High" />
+            <input id="inLow" class="w-full p-2 rounded bg-transparent border border-gray-700 text-white" placeholder="Low" />
+            <input id="inClose" class="w-full p-2 rounded bg-transparent border border-gray-700 text-white" placeholder="Close" />
+            <input id="inVolume" class="w-full p-2 rounded bg-transparent border border-gray-700 text-white" placeholder="Volume" />
+            <button id="btnPredict" class="btn w-full mt-2">Predict</button>
+            <div id="manualResult" class="mt-3 text-center muted"></div>
+          </div>
+        </div>
+
+        <div class="card small-muted">
+          <div class="card-title">Model Info</div>
+          <div class="mt-2">
+            <div>Type: LightGBM Ensemble</div>
+            <div id="metaAUC">AUC: —</div>
+            <div id="metaAcc">Accuracy: —</div>
+            <div id="metaTrained">Trained: —</div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="mt-6 small-muted text-center">Demo • NIFTY50 MLOps • Neon Dark • Auto retrain (daily)</footer>
+  </div>
+
+<script>
+/* ---------- Utilities ---------- */
+function fetchJSON(url, opts){ 
+  console.log('Fetching:', url);
+  return fetch(url, opts).then(r=>{ 
+    console.log('Response status:', r.status);
+    if(!r.ok) throw new Error('HTTP ' + r.status); 
+    return r.json(); 
+  }).catch(err => {
+    console.error('Fetch error:', url, err);
+    throw err;
+  });
+}
+
+/* ---------- Charts ---------- */
+let candleChart = null, volumeChart = null, gaugeChart = null;
+
+async function loadAndRender(){
+  try {
+    console.log('Starting loadAndRender...');
+    const data = await fetchJSON('/api/history');
+    console.log('Got history data:', data);
+    
+    const labels = data.dates;
+    const opens = data.open;
+    const highs = data.high;
+    const lows = data.low;
+    const closes = data.close;
+    const volume = data.volume;
+
+    const csData = labels.map((d,i) => ({ x: d, o: opens[i], h: highs[i], l: lows[i], c: closes[i] }));
+
+    function sma(arr, n=20){
+      const out = [];
+      for(let i=0;i<arr.length;i++){
+        if(i < n-1){ out.push(null); continue; }
+        let sum = 0;
+        for(let j=i-n+1;j<=i;j++) sum += arr[j];
+        out.push(sum/n);
+      }
+      return out;
+    }
+    const sma20 = sma(closes, 20);
+
+    if(candleChart) candleChart.destroy();
+    const ctx = document.getElementById('candlestickChart').getContext('2d');
+    console.log('Creating line chart instead of candlestick...');
+    candleChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Close Price', data: closes, borderColor: '#14f195', backgroundColor: 'rgba(20,241,149,0.1)', tension: 0.3, fill: true },
+          { label: 'SMA20', data: sma20, borderColor: '#34d399', borderWidth: 2, tension: 0.15, pointRadius: 0 }
+        ]
+      },
+      options: {
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: true, labels: { color: '#9aa6b2' } } },
+        scales: { x: { ticks: { color: '#9aa6b2' }, grid: { color: 'rgba(255,255,255,0.02)' } }, y: { ticks: { color: '#9aa6b2' }, grid: { color: 'rgba(255,255,255,0.02)' } } }
+      }
+    });
+
+    if(volumeChart) volumeChart.destroy();
+    const vctx = document.getElementById('volumeChart').getContext('2d');
+    console.log('Creating volume chart...');
+    volumeChart = new Chart(vctx, {
+      type: 'bar',
+      data: { labels: labels, datasets: [{ label:'Volume', data: volume, backgroundColor: '#60a5fa' }] },
+      options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#9aa6b2' } }, y: { ticks: { color: '#9aa6b2' } } } }
+    });
+
+    console.log('Getting prediction...');
+    const pred = await fetchJSON('/api/next_prediction');
+    updatePredictionUI(pred);
+
+    // fetch meta via API (reliable)
+    try {
+      console.log('Getting meta...');
+      const meta = await fetchJSON('/api/meta');
+      document.getElementById('metaAUC').innerText = 'AUC: ' + (meta.auc || '--');
+      document.getElementById('metaAcc').innerText = 'Accuracy: ' + (meta.accuracy || '--');
+      document.getElementById('metaTrained').innerText = 'Trained: ' + (meta.trained_at || '--');
+    } catch(e){
+      console.warn('No meta available', e);
+    }
+    console.log('Load complete!');
+  } catch(err) {
+    console.error('Critical error in loadAndRender:', err);
+    document.getElementById('modelState').innerText = 'Error loading data';
+  }
+}
+
+/* ---------- Prediction UI ---------- */
+function updatePredictionUI(pred){
+  const label = pred.label;
+  const prob = pred.probability;
+  document.getElementById('trendLabel').innerText = label === 'UP' ? 'UP ↑' : 'DOWN ↓';
+  document.getElementById('trendConf').innerText = 'Confidence: ' + prob + '%';
+  drawGauge(prob);
+  const arrowDiv = document.getElementById('trendArrow');
+  arrowDiv.innerHTML = '';
+  if(label === 'UP'){
+    arrowDiv.innerHTML = '<div class="text-6xl glow-up" style="color:var(--neon)">⬆️</div>';
+  } else {
+    arrowDiv.innerHTML = '<div class="text-6xl glow-down" style="color:#ff6b6b">⬇️</div>';
+  }
+}
+
+/* ---------- Gauge ---------- */
+function drawGauge(percent){
+  const ctx = document.getElementById('gauge').getContext('2d');
+  if(gaugeChart) gaugeChart.destroy();
+  gaugeChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: ['conf','rest'], datasets: [{ data:[percent, 100-percent], backgroundColor: [percent >= 50 ? '#14f195' : '#ff6b6b', '#071019'], borderWidth: 0 }] },
+    options:{ cutout:'72%', plugins:{ legend:{ display:false } }, responsive:true }
+  });
+}
+
+/* ---------- Manual predict ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM ready, calling loadAndRender...');
+  loadAndRender();
+
+  document.getElementById('btnPredict').onclick = async () => {
+    const payload = {
+      Open: parseFloat(document.getElementById('inOpen').value),
+      High: parseFloat(document.getElementById('inHigh').value),
+      Low: parseFloat(document.getElementById('inLow').value),
+      Close: parseFloat(document.getElementById('inClose').value),
+      Volume: parseFloat(document.getElementById('inVolume').value || 0)
+    };
+    if(Object.values(payload).some(v => Number.isNaN(v))){
+      document.getElementById('manualResult').innerText = 'Enter valid numeric values';
+      return;
+    }
+    try {
+      const resp = await fetch('/api/predict', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      const j = await resp.json();
+      document.getElementById('manualResult').innerHTML = '<div class="font-semibold">' + (j.label === 'UP' ? 'UP ↑' : 'DOWN ↓') + '</div><div class="muted">Confidence: ' + j.probability + '%</div>';
+    } catch(e){
+      document.getElementById('manualResult').innerText = 'Prediction error';
+    }
+  };
+
+  // Download PNG handler
+  document.getElementById('downloadPNG').onclick = () => {
+    // merge the two charts (candles) into one image by exporting the candlestick canvas
+    const canvas = document.getElementById('candlestickChart');
+    const url = canvas.toDataURL('image/png', 1.0);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'nifty_price_chart.png';
+    a.click();
+  };
+});
+</script>
+</body>
+</html>
