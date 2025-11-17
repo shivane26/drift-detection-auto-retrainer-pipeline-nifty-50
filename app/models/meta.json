@@ -3,7 +3,7 @@
   "accuracy": 0.5288888888888889,
   "horizon_days": 3,
   "threshold_return": 0.004,
-  "trained_at": "2025-11-16 11:20:11",
+  "trained_at": "2025-11-17 11:24:29",
   "features": [
     [
       "Open",
