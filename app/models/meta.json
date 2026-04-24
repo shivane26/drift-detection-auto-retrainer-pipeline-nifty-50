@@ -1,9 +1,9 @@
 {
-  "auc": 0.49668089141773347,
-  "accuracy": 0.48444444444444446,
+  "auc": 0.49853754940711464,
+  "accuracy": 0.49777777777777776,
   "horizon_days": 3,
   "threshold_return": 0.004,
-  "trained_at": "2026-04-23 12:04:03",
+  "trained_at": "2026-04-24 12:01:48",
   "features": [
     [
       "Open",
@@ -86,7 +86,7 @@
       ""
     ]
   ],
-  "retrain_reason": "KS test on Open: 0.4825 > 0.15; KS test on High: 0.5000 > 0.15; KS test on Low: 0.4561 > 0.15; KS test on Close: 0.4561 > 0.15; KS test on Volume: 0.3947 > 0.15",
-  "previous_auc": 0.5079026394815869,
-  "previous_accuracy": 0.5066666666666667
+  "retrain_reason": "KS test on Open: 0.4649 > 0.15; KS test on High: 0.4825 > 0.15; KS test on Low: 0.4386 > 0.15; KS test on Close: 0.4386 > 0.15; KS test on Volume: 0.4035 > 0.15",
+  "previous_auc": 0.49668089141773347,
+  "previous_accuracy": 0.48444444444444446
 }
