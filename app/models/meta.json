@@ -3,7 +3,7 @@
   "accuracy": 0.47555555555555556,
   "horizon_days": 3,
   "threshold_return": 0.004,
-  "trained_at": "2026-05-01 12:03:18",
+  "trained_at": "2026-05-02 11:53:09",
   "features": [
     [
       "Open",
@@ -87,6 +87,6 @@
     ]
   ],
   "retrain_reason": "KS test on Open: 0.4123 > 0.15; KS test on High: 0.4123 > 0.15; KS test on Low: 0.3860 > 0.15; KS test on Close: 0.4035 > 0.15; KS test on Volume: 0.4737 > 0.15; KS test on return: 0.1579 > 0.15; KS test on ret_lag_1: 0.1579 > 0.15; KS test on ret_lag_2: 0.1579 > 0.15; KS test on ret_lag_3: 0.1579 > 0.15",
-  "previous_auc": 0.4723715415019763,
-  "previous_accuracy": 0.4666666666666667
+  "previous_auc": 0.48944664031620555,
+  "previous_accuracy": 0.47555555555555556
 }
