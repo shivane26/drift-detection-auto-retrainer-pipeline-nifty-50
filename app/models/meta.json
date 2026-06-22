@@ -3,7 +3,7 @@
   "accuracy": 0.4618834080717489,
   "horizon_days": 3,
   "threshold_return": 0.004,
-  "trained_at": "2026-06-21 13:14:41",
+  "trained_at": "2026-06-22 15:58:00",
   "features": [
     [
       "Open",
@@ -86,7 +86,7 @@
       ""
     ]
   ],
-  "retrain_reason": "KS test on Open: 0.6018 > 0.15; KS test on High: 0.6018 > 0.15; KS test on Low: 0.6018 > 0.15; KS test on Close: 0.6018 > 0.15; KS test on Volume: 0.7522 > 0.15; KS test on return: 0.2035 > 0.15; KS test on ret_lag_1: 0.2035 > 0.15; KS test on ret_lag_2: 0.2035 > 0.15; KS test on ret_lag_3: 0.2035 > 0.15; KS test on ret_lag_5: 0.1947 > 0.15",
-  "previous_auc": 0.5053013392857143,
-  "previous_accuracy": 0.45535714285714285
+  "retrain_reason": "KS test on Open: 0.6018 > 0.15; KS test on High: 0.6018 > 0.15; KS test on Low: 0.6018 > 0.15; KS test on Close: 0.6018 > 0.15; KS test on Volume: 0.7522 > 0.15; KS test on return: 0.2035 > 0.15; KS test on ret_lag_1: 0.2035 > 0.15; KS test on ret_lag_2: 0.2035 > 0.15; KS test on ret_lag_3: 0.2035 > 0.15; KS test on ret_lag_5: 0.1947 > 0.15; Performance drop: AUC decreased by 0.1077",
+  "previous_auc": 0.515524453024453,
+  "previous_accuracy": 0.4618834080717489
 }
