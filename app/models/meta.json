@@ -3,7 +3,7 @@
   "accuracy": 0.4732142857142857,
   "horizon_days": 3,
   "threshold_return": 0.004,
-  "trained_at": "2026-10-02 16:35:44",
+  "trained_at": "2026-10-03 15:07:48",
   "features": [
     [
       "Open",
@@ -87,6 +87,6 @@
     ]
   ],
   "retrain_reason": "KS test on Open: 0.7259 > 0.15; KS test on High: 0.7434 > 0.15; KS test on Low: 0.7346 > 0.15; KS test on Close: 0.7346 > 0.15; KS test on Volume: 0.2133 > 0.15",
-  "previous_auc": 0.5050862630208333,
-  "previous_accuracy": 0.5178571428571429
+  "previous_auc": 0.4764811197916667,
+  "previous_accuracy": 0.4732142857142857
 }
